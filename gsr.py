@@ -24,9 +24,8 @@ class Snapshot:
 
         offset = 0
         for i in range(6):
-            for j in range(self.Npart[i]):
-                for k in range(3):
-                    self.pos[i][j,k] = everything[offset*3 + j*3 + k]
+            chunk = everything[offset*3:offset*3+self.Npart[i]*3]
+            self.pos[i] = np.reshape(chunk,(self.Npart[i],3))
             offset += self.Npart[i]
 
     def unpackVelocities(self, instring):
@@ -37,9 +36,8 @@ class Snapshot:
 
         offset = 0
         for i in range(6):
-            for j in range(self.Npart[i]):
-                for k in range(3):
-                    self.vel[i][j,k] = everything[offset*3 + j*3 + k]
+            chunk = everything[offset*3:offset*3+self.Npart[i]*3]
+            self.vel[i] = np.reshape(chunk,(self.Npart[i],3))
             offset += self.Npart[i]
 
     def unpackIDs(self, instring):
@@ -50,8 +48,8 @@ class Snapshot:
 
         offset = 0
         for i in range(6):
-            for j in range(self.Npart[i]):
-                self.ID[i][j] = everything[offset + j]
+            chunk = everything[offset:offset+self.Npart[i]]
+            self.ID[i] = np.array(chunk,dtype=np.int)#,(self.Npart[i],3))
             offset += self.Npart[i]
 
     def unpackMasses(self, instring):
@@ -62,8 +60,8 @@ class Snapshot:
 
         offset = 0
         for i in range(6):
-            for j in range(self.Npart[i]):
-                self.m[i][j] = everything[offset + j]
+            chunk = everything[offset:offset+self.Npart[i]]
+            self.m[i] = np.array(chunk)
             offset += self.Npart[i]
 
     def ProcessHeader(self):

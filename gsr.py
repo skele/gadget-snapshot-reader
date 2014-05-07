@@ -3,39 +3,15 @@
 import os.path
 import struct
 import numpy as np
-import argparse as ap
-
-
-class OptionParser:
-    def __init__(self):
-        desc = "Gadget Snapshot Reader (GSR)"
-        self.parser = ap.ArgumentParser(prog="GSR",
-                                        description=desc,
-                                        formatter_class=ap.RawTextHelpFormatter)
-
-        # General options
-        self.general_group = self.parser.add_argument_group("General options")
-        self.add_general_options()
-
-    def add_general_options(self):
-        file_help = "Input filename"
-        self.general_group.add_argument("-f",
-                                        dest="fname",
-                                        type=str,
-                                        nargs="*",
-                                        help=file_help,
-                                        required=True)
-
-    def get_options(self):
-        return self.parser.parse_args()
-
+import sys
 
 class Snapshot:
     """Class in charge of the read-process of every snapshot"""
 
     def __init__(self, filename):
         if os.path.isfile(filename):
-            self.binfile = open(filename, "rb")
+            self.fname = filename
+            self.binfile = open(self.fname, "rb")
             self.SnapshotData = {}
 
             # Process header
@@ -45,6 +21,7 @@ class Snapshot:
             self.SnapshotData['ids'] = self.ProcessParticlesIds()
             self.SnapshotData['mass'] = self.ProcessParticlesMass()
         else:
+            print(filename, ": No such file")
             sys.exit(1)
 
     def __exit__(self):
@@ -68,7 +45,7 @@ class Snapshot:
         self.Npart = np.array(everything[:6])
         self.mpart = np.array(everything[6:12])
         self.time = everything[12]
-        self.Ntot = sum(self.Npart)
+        self.Ntot = self.Npart.sum()
         return {'Npart': self.Npart,
                 'Mpart': self.mpart,
                 'Time': self.time,
@@ -180,61 +157,69 @@ class Snapshot:
         com = com/totM
         self.com = com
 
-# Print utils
+    def to_ascii(self):
+        def get_tuple(key):
+            return tuple(i for i in self.SnapshotData[key])
 
-def print_header(snap):
-    for key, val in snap.SnapshotData['header'].iteritems():
-        print(key, val)
+        ids = np.concatenate(get_tuple('ids'), axis = 0)
+        mass = np.concatenate(get_tuple('mass'), axis = 0)
+        pos = np.concatenate(get_tuple('pos'), axis = 0)
+        vel = np.concatenate(get_tuple('vel'), axis = 0)
 
+        fmtstring = ['%8d', '%1.5e',
+                     '% 1.5e', '% 1.5e', '% 1.5e',
+                     '% 1.5e', '% 1.5e', '% 1.5e']
 
-def print_pos(snap):
-    ptype = 0
-    for p in snap.SnapshotData['pos']:
-        print("Type", ptype, p)
-        ptype += 1
+        np.savetxt(fname+'.asc',
+                   np.hstack([zip(ids, mass), pos, vel]),
+                   fmt=fmtstring)
 
+    def get_data_by_type(self, ptype):
+        return [self.SnapshotData['ids'][ptype],
+               self.SnapshotData['mass'][ptype],
+               self.SnapshotData['pos'][ptype],
+               self.SnapshotData['vel'][ptype]]
 
-def print_vel(snap):
-    vtype = 0
-    for v in snap.SnapshotData['vel']:
-        print("Type", vtype, v)
-        vtype += 1
+    def print_data_by_type(self, ptype):
+        for i in range(self.Npart[ptype]):
+            pid = self.SnapshotData['ids'][ptype][i]
+            mass = self.SnapshotData['mass'][ptype][i]
+            posx, posy, posz = self.SnapshotData['pos'][ptype][i]
+            velx, vely, velz = self.SnapshotData['vel'][ptype][i]
 
+            print('%8d %1.5e % 1.5e % 1.5e % 1.5e % 1.5e % 1.5e % 1.5e' % (pid, mass, posx, posy, posz, velx, vely, velz))
 
-def print_ids(snap):
-    itype = 0
-    for i in snap.SnapshotData['ids']:
-        print("Type", itype, i)
-        itype += 1
+## Print utils
+#
+#def print_header(snap):
+#    for key, val in snap.SnapshotData['header'].iteritems():
+#        print(key, val)
+#
+#
+#def print_pos(snap):
+#    ptype = 0
+#    for p in snap.SnapshotData['pos']:
+#        print("Type", ptype, p)
+#        ptype += 1
+#
+#
+#def print_vel(snap):
+#    vtype = 0
+#    for v in snap.SnapshotData['vel']:
+#        print("Type", vtype, v)
+#        vtype += 1
+#
+#
+#def print_ids(snap):
+#    itype = 0
+#    for i in snap.SnapshotData['ids']:
+#        print("Type", itype, i)
+#        itype += 1
+#
+#
+#def print_mass(snap):
+#    mtype = 0
+#    for m in snap.SnapshotData['mass']:
+#        print("Type", mtype, m)
+#        mtype += 1
 
-
-def print_mass(snap):
-    mtype = 0
-    for m in snap.SnapshotData['mass']:
-        print("Type", mtype, m)
-        mtype += 1
-
-def print_ascii(fname, snap):
-    def get_tuple(key):
-        return tuple(i for i in snap.SnapshotData[key])
-
-    ids = np.concatenate(get_tuple('ids'), axis = 0)
-    mass = np.concatenate(get_tuple('mass'), axis = 0)
-    pos = np.concatenate(get_tuple('pos'), axis = 0)
-    vel = np.concatenate(get_tuple('vel'), axis = 0)
-
-    fmtstring = ['%8d', '%1.5e',
-                 '% 1.5e', '% 1.5e', '% 1.5e',
-                 '% 1.5e', '% 1.5e', '% 1.5e']
-
-    np.savetxt(fname+'.asc',
-               np.hstack([zip(ids, mass), pos, vel]),
-               fmt=fmtstring)
-
-
-if __name__ == '__main__':
-    op = OptionParser().get_options()
-    for f in op.fname:
-        snap = Snapshot(f)
-        print("Processing snapshot", f,"...")
-        print_ascii(f, snap)

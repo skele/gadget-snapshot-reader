@@ -193,7 +193,8 @@ class Snapshot:
             posx, posy, posz = self.SnapshotData['pos'][ptype][i]
             velx, vely, velz = self.SnapshotData['vel'][ptype][i]
 
-            print('%8d %1.5e % 1.5e % 1.5e % 1.5e % 1.5e % 1.5e % 1.5e' % (pid, mass, posx, posy, posz, velx, vely, velz))
+            fmtstring = '%8d %1.5e % 1.5e % 1.5e % 1.5e % 1.5e % 1.5e % 1.5e'
+            print(fmtstring % (pid, mass, posx, posy, posz, velx, vely, velz))
 
 ## Print utils
 #

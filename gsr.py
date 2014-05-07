@@ -175,12 +175,18 @@ class Snapshot:
                    fmt=fmtstring)
 
     def get_data_by_type(self, ptype):
+        if ptype < 0 or ptype > 5:
+            print(pytpe, "Invalid data type, use only 0, 1, 2, 3, 4 or 5")
+            return None
         return [self.SnapshotData['ids'][ptype],
                self.SnapshotData['mass'][ptype],
                self.SnapshotData['pos'][ptype],
                self.SnapshotData['vel'][ptype]]
 
     def print_data_by_type(self, ptype):
+        if ptype < 0 or ptype > 5:
+            print(pytpe, "Invalid data type, use only 0, 1, 2, 3, 4 or 5")
+            return None
         for i in range(self.Npart[ptype]):
             pid = self.SnapshotData['ids'][ptype][i]
             mass = self.SnapshotData['mass'][ptype][i]

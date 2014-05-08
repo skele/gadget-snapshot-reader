@@ -140,6 +140,10 @@ class Snapshot:
 
         return self.m
 
+    # TO DO
+    # Density processing
+    # Energy processing
+
     # Utils
 
     def computeCOM(self, parts=range(6)):
@@ -173,6 +177,9 @@ class Snapshot:
         np.savetxt(fname+'.asc',
                    np.hstack([zip(ids, mass), pos, vel]),
                    fmt=fmtstring)
+
+    def get_header(self):
+        return self.SnapshotData['header']
 
     def get_data_by_type(self, ptype):
         if ptype < 0 or ptype > 5:
